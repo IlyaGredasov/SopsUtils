@@ -22,9 +22,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--source-file", type=Path, help="Default: <root-dir>/.env.enc."
     )
-    parser.add_argument(
-        "--output-file", type=Path, help="Default: <root-dir>/.env."
-    )
+    parser.add_argument("--output-file", type=Path, help="Default: <root-dir>/.env.")
     parser.add_argument(
         "--env-schema-file", type=Path, help="Default: <root-dir>/env-schema.yaml."
     )

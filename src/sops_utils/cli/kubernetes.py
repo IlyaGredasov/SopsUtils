@@ -14,9 +14,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--root-dir", type=Path, default=Path.cwd(), help="Default: current directory."
     )
-    parser.add_argument(
-        "--source-file", type=Path, help="Default: <root-dir>/.env."
-    )
+    parser.add_argument("--source-file", type=Path, help="Default: <root-dir>/.env.")
     parser.add_argument(
         "--k8s-base-dir", type=Path, help="Default: <root-dir>/infra/k8s/base."
     )

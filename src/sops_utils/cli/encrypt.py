@@ -18,9 +18,7 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="Generate manifests in <root-dir>/infra/k8s/base.",
     )
-    parser.add_argument(
-        "--source-file", type=Path, help="Default: <root-dir>/.env."
-    )
+    parser.add_argument("--source-file", type=Path, help="Default: <root-dir>/.env.")
     parser.add_argument(
         "--output-file", type=Path, help="Default: <root-dir>/.env.enc."
     )

@@ -1,6 +1,6 @@
 [project]
 name = "sops-utils"
-version = "0.1.2"
+version = "0.1.3"
 description = "CLI utilities for work with local environment secrets files and Kubernetes manifests"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -38,3 +38,13 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sops_utils"]
+
+[tool.ruff]
+src = ["src"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["sops_utils"]
+known-third-party = [
+    "dotenv",
+    "yaml",
+]
