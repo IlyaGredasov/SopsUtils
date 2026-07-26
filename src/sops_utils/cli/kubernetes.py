@@ -21,6 +21,9 @@ def parse_arguments() -> argparse.Namespace:
         "--k8s-base-dir", type=Path, help="Default: <root-dir>/infra/k8s/base."
     )
     parser.add_argument(
+        "--namespace-file", type=Path, help="Default: <k8s-base-dir>/namespace.yaml."
+    )
+    parser.add_argument(
         "--configmap-file", type=Path, help="Default: <k8s-base-dir>/configmap.yaml."
     )
     parser.add_argument(
@@ -39,6 +42,7 @@ def parse_arguments() -> argparse.Namespace:
     args.root_dir = args.root_dir.resolve()
     args.source_file = args.source_file or args.root_dir / ".env"
     args.k8s_base_dir = args.k8s_base_dir or args.root_dir / "infra" / "k8s" / "base"
+    args.namespace_file = args.namespace_file or args.k8s_base_dir / "namespace.yaml"
     args.configmap_file = args.configmap_file or args.k8s_base_dir / "configmap.yaml"
     args.secret_file = args.secret_file or args.k8s_base_dir / "secret.yaml"
     args.enc_secret_file = args.enc_secret_file or args.k8s_base_dir / "secret.enc.yaml"
@@ -50,7 +54,12 @@ def main() -> None:
     args = parse_arguments()
     values, schema = load_env_values(args.source_file, args.env_schema_file)
     write_manifests(
-        values, schema, args.configmap_file, args.secret_file, args.namespace
+        values,
+        schema,
+        args.namespace_file,
+        args.configmap_file,
+        args.secret_file,
+        args.namespace,
     )
     encrypt_file(args.secret_file, args.enc_secret_file)
 

@@ -28,11 +28,14 @@ def load_env_values(
 def write_manifests(
     values: dict[str, str],
     schema: dict[str, str],
+    namespace_file: Path,
     configmap_file: Path,
     secret_file: Path,
     namespace: str,
 ) -> None:
     configmap_file.parent.mkdir(parents=True, exist_ok=True)
+    namespace_file.parent.mkdir(parents=True, exist_ok=True)
+    namespace_file.write_text(_render_namespace(namespace), encoding="utf-8")
     config_values = {
         name: value for name, value in values.items() if schema[name] == "config"
     }
@@ -73,3 +76,7 @@ def _render(kind: str, name: str, namespace: str, data: dict[str, str]) -> str:
         + rendered_data
         + "\n"
     )
+
+
+def _render_namespace(namespace: str) -> str:
+    return f"apiVersion: v1\nkind: Namespace\nmetadata:\n  name: {namespace}\n"

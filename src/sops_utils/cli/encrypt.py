@@ -50,7 +50,12 @@ def main() -> None:
         base_dir = args.root_dir / "infra" / "k8s" / "base"
         secret_file = base_dir / "secret.yaml"
         write_manifests(
-            values, schema, base_dir / "configmap.yaml", secret_file, args.namespace
+            values,
+            schema,
+            base_dir / "namespace.yaml",
+            base_dir / "configmap.yaml",
+            secret_file,
+            args.namespace,
         )
         encrypt_file(secret_file, base_dir / "secret.enc.yaml")
 
