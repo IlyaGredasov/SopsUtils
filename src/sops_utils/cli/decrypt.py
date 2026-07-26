@@ -10,14 +10,30 @@ from sops_utils.kubernetes import load_env_values, write_manifests
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Decrypt an env file with SOPS.")
-    parser.add_argument("--root-dir", type=Path, default=Path.cwd())
+    parser.add_argument(
+        "--root-dir", type=Path, default=Path.cwd(), help="Default: current directory."
+    )
     parser.add_argument("--age-key-file", type=Path)
-    parser.add_argument("--with-k8s", action="store_true")
-    parser.add_argument("--source-file", type=Path)
-    parser.add_argument("--output-file", type=Path)
-    parser.add_argument("--env-schema-file", type=Path)
-    parser.add_argument("--namespace", default="riddoc")
+    parser.add_argument(
+        "--with-k8s",
+        action="store_true",
+        help="Generate manifests in <root-dir>/infra/k8s/base.",
+    )
+    parser.add_argument(
+        "--source-file", type=Path, help="Default: <root-dir>/.env.enc."
+    )
+    parser.add_argument(
+        "--output-file", type=Path, help="Default: <root-dir>/.env."
+    )
+    parser.add_argument(
+        "--env-schema-file", type=Path, help="Default: <root-dir>/env-schema.yaml."
+    )
+    parser.add_argument(
+        "--namespace", help="Kubernetes namespace (required with --with-k8s)."
+    )
     args = parser.parse_args()
+    if args.with_k8s and not args.namespace:
+        parser.error("--namespace is required with --with-k8s")
     args.root_dir = args.root_dir.resolve()
     args.source_file = args.source_file or args.root_dir / ".env.enc"
     args.output_file = args.output_file or args.root_dir / ".env"

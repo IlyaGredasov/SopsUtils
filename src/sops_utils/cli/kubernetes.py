@@ -11,14 +11,30 @@ def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate encrypted Kubernetes configuration."
     )
-    parser.add_argument("--root-dir", type=Path, default=Path.cwd())
-    parser.add_argument("--source-file", type=Path)
-    parser.add_argument("--k8s-base-dir", type=Path)
-    parser.add_argument("--configmap-file", type=Path)
-    parser.add_argument("--secret-file", type=Path)
-    parser.add_argument("--enc-secret-file", type=Path)
-    parser.add_argument("--env-schema-file", type=Path)
-    parser.add_argument("--namespace", default="riddoc")
+    parser.add_argument(
+        "--root-dir", type=Path, default=Path.cwd(), help="Default: current directory."
+    )
+    parser.add_argument(
+        "--source-file", type=Path, help="Default: <root-dir>/.env."
+    )
+    parser.add_argument(
+        "--k8s-base-dir", type=Path, help="Default: <root-dir>/infra/k8s/base."
+    )
+    parser.add_argument(
+        "--configmap-file", type=Path, help="Default: <k8s-base-dir>/configmap.yaml."
+    )
+    parser.add_argument(
+        "--secret-file", type=Path, help="Default: <k8s-base-dir>/secret.yaml."
+    )
+    parser.add_argument(
+        "--enc-secret-file",
+        type=Path,
+        help="Default: <k8s-base-dir>/secret.enc.yaml.",
+    )
+    parser.add_argument(
+        "--env-schema-file", type=Path, help="Default: <root-dir>/env-schema.yaml."
+    )
+    parser.add_argument("--namespace", required=True, help="Kubernetes namespace.")
     args = parser.parse_args()
     args.root_dir = args.root_dir.resolve()
     args.source_file = args.source_file or args.root_dir / ".env"
