@@ -1,0 +1,40 @@
+[project]
+name = "sops-utils"
+version = "0.1.0"
+description = "CLI utilities for work with local environment secrets files and Kubernetes manifests"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Ilya Gredasov" },
+]
+keywords = ["sops", "age", "kubernetes", "secrets", "dotenv"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Security",
+]
+
+dependencies = [
+  "python-dotenv>=1.2.2",
+  "pyyaml>=6.0.3",
+]
+
+[project.scripts]
+sops-encrypt = "sops_utils.cli.encrypt:main"
+sops-decrypt = "sops_utils.cli.decrypt:main"
+sops-k8s = "sops_utils.cli.kubernetes:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sops_utils"]
