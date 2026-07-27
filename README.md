@@ -19,4 +19,10 @@ variables:
   APP_ENV: global
   POSTGRES_DB: config
   POSTGRES_PASSWORD: secret
+  REDIS_ENDPOINT:
+    type: config
+    k8s_value: redis://redis-master:6379/0
 ```
+
+`k8s_value` is used only in generated Kubernetes manifests; the value in `.env`
+is retained when encrypting the dotenv file.
