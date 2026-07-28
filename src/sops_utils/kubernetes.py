@@ -35,6 +35,7 @@ def write_manifests(
     configmap_file: Path,
     secret_file: Path,
     namespace: str,
+    resource_prefix: str | None = None,
 ) -> None:
     configmap_file.parent.mkdir(parents=True, exist_ok=True)
     namespace_file.parent.mkdir(parents=True, exist_ok=True)
@@ -45,12 +46,13 @@ def write_manifests(
     secret_values = {
         name: value for name, value in values.items() if schema[name] == "secret"
     }
+    resource_prefix = resource_prefix or namespace
     configmap_file.write_text(
-        _render("ConfigMap", f"{namespace}-config", namespace, config_values),
+        _render("ConfigMap", f"{resource_prefix}-config", namespace, config_values),
         encoding="utf-8",
     )
     secret_file.write_text(
-        _render("Secret", f"{namespace}-secrets", namespace, secret_values),
+        _render("Secret", f"{resource_prefix}-secrets", namespace, secret_values),
         encoding="utf-8",
     )
 

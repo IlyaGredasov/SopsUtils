@@ -30,6 +30,11 @@ def decrypt_file(source_file: Path, output_file: Path, age_key_file: Path) -> No
     _run_to_file(command, output_file, environment)
 
 
+def find_env_files(root_dir: Path, encrypted: bool) -> list[Path]:
+    pattern = "*.env.enc" if encrypted else "*.env"
+    return sorted(path for path in root_dir.rglob(pattern) if path.is_file())
+
+
 def _run_to_file(
     command: list[str],
     output_file: Path,
