@@ -36,7 +36,7 @@ def write_manifests(
     secret_file: Path,
     namespace: str,
     resource_prefix: str | None = None,
-) -> None:
+) -> bool:
     configmap_file.parent.mkdir(parents=True, exist_ok=True)
     namespace_file.parent.mkdir(parents=True, exist_ok=True)
     namespace_file.write_text(_render_namespace(namespace), encoding="utf-8")
@@ -47,14 +47,21 @@ def write_manifests(
         name: value for name, value in values.items() if schema[name] == "secret"
     }
     resource_prefix = resource_prefix or namespace
-    configmap_file.write_text(
-        _render("ConfigMap", f"{resource_prefix}-config", namespace, config_values),
-        encoding="utf-8",
-    )
-    secret_file.write_text(
-        _render("Secret", f"{resource_prefix}-secrets", namespace, secret_values),
-        encoding="utf-8",
-    )
+    if config_values:
+        configmap_file.write_text(
+            _render("ConfigMap", f"{resource_prefix}-config", namespace, config_values),
+            encoding="utf-8",
+        )
+    else:
+        configmap_file.unlink(missing_ok=True)
+    if secret_values:
+        secret_file.write_text(
+            _render("Secret", f"{resource_prefix}-secrets", namespace, secret_values),
+            encoding="utf-8",
+        )
+    else:
+        secret_file.unlink(missing_ok=True)
+    return bool(secret_values)
 
 
 def _load_schema(path: Path) -> tuple[dict[str, str], dict[str, str]]:

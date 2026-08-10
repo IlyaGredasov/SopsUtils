@@ -1,6 +1,6 @@
 [project]
 name = "sops-utils"
-version = "1.0.0"
+version = "1.1.0"
 description = "CLI utilities for work with local environment secrets files and Kubernetes manifests"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -30,7 +30,6 @@ dependencies = [
 [project.scripts]
 sops-encrypt = "sops_utils.cli.encrypt:main"
 sops-decrypt = "sops_utils.cli.decrypt:main"
-sops-k8s = "sops_utils.cli.kubernetes:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -44,7 +43,3 @@ src = ["src"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["sops_utils"]
-known-third-party = [
-    "dotenv",
-    "yaml",
-]

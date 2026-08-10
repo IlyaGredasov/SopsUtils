@@ -2,18 +2,23 @@
 Reusable CLI utilities for encrypting dotenv files with SOPS and, optionally,
 generating Kubernetes ConfigMap and encrypted Secret manifests.
 
-Run them from a consuming project by passing its root directory:
+After installation, run the commands from the consuming project's root directory:
 
 ```powershell
-uv run --directory path/to/sops_utils scripts/encrypt_sops.py --root-dir . --source-file .env
-uv run --directory path/to/sops_utils scripts/encrypt_sops.py --root-dir . --source-file .env --with-k8s --namespace my-app
-uv run --directory path/to/sops_utils scripts/decrypt_sops.py --root-dir . --source-file .env.enc --age-key-file age-key.txt
-uv run --directory path/to/sops_utils scripts/encrypt_sops.py --root-dir . --project
+sops-encrypt --root-dir .
+sops-encrypt --root-dir . --with-k8s --namespace my-app
+sops-decrypt --root-dir . --age-key-file age-key.txt
 ```
 
-Use `--source-file` (and optionally `--output-file`) to process one file. Use `--project` to recursively process every env file: encryption finds `*.env` and creates a sibling `<name>.env.enc`, while decryption finds `*.env.enc` and restores the sibling `.env`.
+Encryption recursively finds every `*.env` file under `--root-dir` and creates a
+sibling `<name>.env.enc` file. Decryption finds every `*.env.enc` file and
+restores the sibling `.env` file.
 
-With `--project --with-k8s`, each env file uses the `env-schema.yaml` in the same directory. For `service/service.env`, manifests are generated in `infra/k8s/base/service`; the root `.env` still uses `infra/k8s/base`.
+With `--with-k8s`, each env file uses the `env-schema.yaml` in the same
+directory. Both `env/service.env` and `service/.env` generate manifests in
+`infra/k8s/base/service`; the root `.env` still uses `infra/k8s/base`.
+ConfigMap and Secret manifests are created only when the respective env values
+are present. Encrypted Secrets use the `secret.yaml.enc` filename.
 
 Use `--namespace` to set both the Kubernetes namespace and the generated resource names (`<namespace>-config` and `<namespace>-secrets`).
 
