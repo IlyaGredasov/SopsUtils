@@ -9,6 +9,14 @@ from dotenv import dotenv_values
 VALID_TYPES = frozenset({"global", "config", "secret"})
 
 
+def schema_file_for(env_file: Path, explicit_schema_file: Path | None = None) -> Path:
+    if explicit_schema_file is not None:
+        return explicit_schema_file
+    if env_file.name == ".env":
+        return env_file.parent / "env-schema.yaml"
+    return env_file.with_name(f"{env_file.name.removesuffix('.env')}-env-schema.yaml")
+
+
 def load_env_values(
     path: Path, schema_file: Path
 ) -> tuple[dict[str, str], dict[str, str]]:

@@ -7,6 +7,10 @@ from contextlib import suppress
 from pathlib import Path
 
 
+class SopsError(RuntimeError):
+    """Raised when the SOPS command cannot process a file."""
+
+
 def encrypt_file(source_file: Path, output_file: Path) -> None:
     command = ["sops", "--encrypt"]
     if source_file.suffix == ".env":
@@ -51,6 +55,11 @@ def _run_to_file(
             temporary_path = Path(temporary_file.name)
             subprocess.run(command, check=True, env=environment, stdout=temporary_file)
         temporary_path.replace(output_file)
+    except subprocess.CalledProcessError as error:
+        if temporary_path is not None:
+            with suppress(OSError):
+                temporary_path.unlink()
+        raise SopsError(f"SOPS failed with exit code {error.returncode}") from None
     except BaseException:
         if temporary_path is not None:
             with suppress(OSError):

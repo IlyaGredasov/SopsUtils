@@ -14,9 +14,7 @@ Encryption recursively finds every `*.env` file under `--root-dir` and creates a
 sibling `<name>.env.enc` file. Decryption finds every `*.env.enc` file and
 restores the sibling `.env` file.
 
-With `--with-k8s`, each env file uses the `env-schema.yaml` in the same
-directory. Both `env/service.env` and `service/.env` generate manifests in
-`infra/k8s/base/service`; the root `.env` still uses `infra/k8s/base`.
+With `--with-k8s`, the root `.env` uses the root `./env-schema.yaml`. A named env file uses a schema with the mandatory matching prefix: for example, `env/service.env` uses `env/service-env-schema.yaml`. The existing `service/.env` with `service/env-schema.yaml` remains supported. Both service layouts generate manifests in `infra/k8s/base/service`; the root `.env` uses `infra/k8s/base`.
 ConfigMap and Secret manifests are created only when the respective env values
 are present. Encrypted Secrets use the `secret.yaml.enc` filename.
 

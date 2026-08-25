@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import sys
 from pathlib import Path
 
 from sops_utils.core import decrypt_file, encrypt_file, find_env_files
-from sops_utils.kubernetes import load_env_values, write_manifests
+from sops_utils.kubernetes import load_env_values, schema_file_for, write_manifests
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -31,37 +32,48 @@ def parse_arguments() -> argparse.Namespace:
     if args.with_k8s and not args.namespace:
         parser.error("--namespace is required with --with-k8s")
     args.root_dir = args.root_dir.resolve()
+    if args.age_key_file is not None and not args.age_key_file.is_absolute():
+        args.age_key_file = args.root_dir / args.age_key_file
     return args
 
 
-def main() -> None:
+def main() -> int:
     args = parse_arguments()
     if shutil.which("sops") is None:
-        raise RuntimeError("sops is not installed or is not available on PATH")
+        print(
+            "Error: sops is not installed or is not available on PATH", file=sys.stderr
+        )
+        return 1
     source_files = find_env_files(args.root_dir, encrypted=True)
     if not source_files:
-        raise FileNotFoundError(f"No .env.enc files found under {args.root_dir}")
+        print(f"Error: no .env.enc files found under {args.root_dir}", file=sys.stderr)
+        return 1
+    failed = False
     for source_file in source_files:
-        output_file = source_file.with_name(source_file.name.removesuffix(".enc"))
-        decrypt_file(source_file, output_file, args.age_key_file)
-        if args.with_k8s:
-            schema_file = args.env_schema_file or output_file.parent / "env-schema.yaml"
-            env_file = source_file.with_name(source_file.name.removesuffix(".enc"))
-            base_dir = _k8s_base_dir(args, env_file)
-            secret_file = base_dir / "secret.yaml"
-            has_secret = write_manifests(
-                *load_env_values(output_file, schema_file),
-                args.root_dir / "infra" / "k8s" / "base" / "namespace.yaml",
-                base_dir / "configmap.yaml",
-                secret_file,
-                args.namespace,
-                _resource_prefix(args, env_file),
-            )
-            encrypted_secret_file = base_dir / "secret.yaml.enc"
-            if has_secret:
-                encrypt_file(secret_file, encrypted_secret_file)
-            else:
-                encrypted_secret_file.unlink(missing_ok=True)
+        try:
+            output_file = source_file.with_name(source_file.name.removesuffix(".enc"))
+            decrypt_file(source_file, output_file, args.age_key_file)
+            if args.with_k8s:
+                schema_file = schema_file_for(output_file, args.env_schema_file)
+                base_dir = _k8s_base_dir(args, output_file)
+                secret_file = base_dir / "secret.yaml"
+                has_secret = write_manifests(
+                    *load_env_values(output_file, schema_file),
+                    args.root_dir / "infra" / "k8s" / "base" / "namespace.yaml",
+                    base_dir / "configmap.yaml",
+                    secret_file,
+                    args.namespace,
+                    _resource_prefix(args, output_file),
+                )
+                encrypted_secret_file = base_dir / "secret.yaml.enc"
+                if has_secret:
+                    encrypt_file(secret_file, encrypted_secret_file)
+                else:
+                    encrypted_secret_file.unlink(missing_ok=True)
+        except Exception as error:  # noqa: BLE001
+            print(f"Error processing {source_file}: {error}", file=sys.stderr)
+            failed = True
+    return int(failed)
 
 
 def _k8s_base_dir(args: argparse.Namespace, source_file: Path) -> Path:
