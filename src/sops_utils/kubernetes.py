@@ -36,6 +36,87 @@ def load_env_values(
     return values, schema
 
 
+def load_service_definitions(path: Path, root_dir: Path) -> dict[str, list[Path]]:
+    if not path.is_file():
+        return {}
+    raw_definitions = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(raw_definitions, dict):
+        raise TypeError("Service schema must contain a mapping")
+    definitions = raw_definitions.get("services", raw_definitions)
+    if not isinstance(definitions, dict):
+        raise TypeError("'services' must be a mapping")
+
+    root_dir = root_dir.resolve()
+    services: dict[str, list[Path]] = {}
+    for name, definition in definitions.items():
+        if not isinstance(name, str) or not isinstance(definition, dict):
+            raise TypeError("Each service definition must be a mapping")
+        unknown_fields = set(definition) - {"env_file", "env_files"}
+        env_files = definition.get("env_files", definition.get("env_file"))
+        if unknown_fields or not isinstance(env_files, list) or not env_files:
+            raise ValueError(f"Service '{name}' must contain a non-empty env_file list")
+
+        resolved_files: list[Path] = []
+        for env_file in env_files:
+            if not isinstance(env_file, str):
+                raise TypeError(f"Service '{name}' env_file entries must be strings")
+            resolved_file = (root_dir / env_file).resolve()
+            try:
+                resolved_file.relative_to(root_dir)
+            except ValueError as error:
+                raise ValueError(
+                    f"Service '{name}' env file must be inside {root_dir}: {env_file}"
+                ) from error
+            if resolved_file.suffix != ".env" or not resolved_file.is_file():
+                raise FileNotFoundError(
+                    f"Service '{name}' env file not found: {env_file}"
+                )
+            resolved_files.append(resolved_file)
+        services[name] = resolved_files
+    return services
+
+
+def write_service_manifests(
+    env_files: list[Path],
+    namespace_file: Path,
+    base_dir: Path,
+    namespace: str,
+    resource_prefix: str,
+    explicit_schema_file: Path | None = None,
+) -> Path | None:
+    values, schema = _combine_env_values(env_files, explicit_schema_file)
+    secret_file = base_dir / "secret.yaml"
+    has_secret = write_manifests(
+        values,
+        schema,
+        namespace_file,
+        base_dir / "configmap.yaml",
+        secret_file,
+        namespace,
+        resource_prefix,
+    )
+    return secret_file if has_secret else None
+
+
+def _combine_env_values(
+    env_files: list[Path], explicit_schema_file: Path | None
+) -> tuple[dict[str, str], dict[str, str]]:
+    combined_values: dict[str, str] = {}
+    combined_schema: dict[str, str] = {}
+    for env_file in env_files:
+        values, schema = load_env_values(
+            env_file, schema_file_for(env_file, explicit_schema_file)
+        )
+        duplicate_names = sorted(set(combined_values) & set(values))
+        if duplicate_names:
+            raise ValueError(
+                f"Variables defined more than once: {', '.join(duplicate_names)}"
+            )
+        combined_values.update(values)
+        combined_schema.update(schema)
+    return combined_values, combined_schema
+
+
 def write_manifests(
     values: dict[str, str],
     schema: dict[str, str],

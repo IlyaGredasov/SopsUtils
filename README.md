@@ -5,9 +5,9 @@ generating Kubernetes ConfigMap and encrypted Secret manifests.
 After installation, run the commands from the consuming project's root directory:
 
 ```powershell
-sops-encrypt --root-dir .
-sops-encrypt --root-dir . --with-k8s --namespace my-app
-sops-decrypt --root-dir . --age-key-file age-key.txt
+sops-encrypt
+sops-encrypt --with-k8s --namespace my-app
+sops-decrypt --age-key-file age-key.txt
 ```
 
 Encryption recursively finds every `*.env` file under `--root-dir` and creates a
@@ -17,6 +17,27 @@ restores the sibling `.env` file.
 With `--with-k8s`, the root `.env` uses the root `./env-schema.yaml`. A named env file uses a schema with the mandatory matching prefix: for example, `env/service.env` uses `env/service-env-schema.yaml`. The existing `service/.env` with `service/env-schema.yaml` remains supported. Both service layouts generate manifests in `infra/k8s/base/service`; the root `.env` uses `infra/k8s/base`.
 ConfigMap and Secret manifests are created only when the respective env values
 are present. Encrypted Secrets use the `secret.yaml.enc` filename.
+
+To combine several env files into one service ConfigMap and Secret, add an
+optional `service-schema.yaml` in the project root:
+
+```yaml
+api:
+  env_file:
+    - env/postgres.env
+    - env/api.env
+    - env/minio.env
+    - env/mediamtx.env
+```
+
+`env_files` is accepted as an alias for `env_file`; an optional outer `services:`
+mapping is also supported. The listed paths are relative to the project root.
+This produces `infra/k8s/base/api/configmap.yaml` and, when secrets exist,
+`secret.yaml` and `secret.yaml.enc`. A variable may appear in only one env file
+of a service; duplicates are reported as an error. Env files referenced by a
+service are not additionally exported as individual Kubernetes resources. Files
+not referenced by any service retain the individual export behaviour described
+above.
 
 Use `--namespace` to set both the Kubernetes namespace and the generated resource names (`<namespace>-config` and `<namespace>-secrets`).
 
